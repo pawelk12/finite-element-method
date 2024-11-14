@@ -2,7 +2,7 @@ import math
 from models import GlobalData, Node, Element, Grid, ElemUniv, Jakobian
 from parse_data import read_global_data, read_coords, read_elements
 
-"""
+'''
 filename = "Test1_4_4.txt"
 global_data = read_global_data(filename)
 nodes = read_coords(filename)
@@ -45,8 +45,8 @@ for element in grid.elements:
         print("J1:", jakobian.J1)      
         print("detJ:", jakobian.detJ)  
         print()
-"""
 
+'''
 
 '''
 
@@ -76,10 +76,10 @@ element.initialize_matrixH(elem_univ, npc=len(integration_points), conductivity=
 
 
 print("Matrix H for element")
-print(element.final_matrix_H)'''
+print(element.final_matrix_H)
 
 
-
+'''
 ##############################################
 ### Test2 3 integration points 2D Gauss schema
 '''
@@ -123,7 +123,7 @@ print(element.final_matrix_H)
 '''
 
 ##################################
-# Test 3
+# Test 3, 2 points of integration for non-square element shape
 
 conductivity = 30
 nodes = [Node(x=0.01, y=-0.01), Node(x=0.025, y=0.0), Node(x=0.025, y=0.025), Node(x=0.0, y=0.025)]
@@ -144,8 +144,7 @@ weights_for_integration_points = [(1, 1), (1, 1), (1, 1), (1, 1)]
 elem_univ = ElemUniv(integration_points)
 
 element.initialize_jakobian(elem_univ, grid, npc=len(integration_points))
-#jakobiany dobrze
-# dndxi i dndeta sie zgadza
+
 element.initialize_matrixH(elem_univ, npc=len(integration_points), conductivity=conductivity, weights=weights_for_integration_points)
 print("Matrix H for element")
 print(element.final_matrix_H)

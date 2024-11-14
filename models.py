@@ -55,39 +55,12 @@ class Jakobian:
 
 
 
-
-'''class MatrixH:
-    def __init__(self, elem_univ, scaling_matrix: np.ndarray, iteration: int, npc: int, conductivity: int, detJ: float):
-        self.scaling_matrix: np.darray = scaling_matrix
-        self.matrix_H: np.darray = np.zeros((npc,npc))
-        scaling_matrix_string = np.array2string(self.scaling_matrix, precision=5, separator=', ')
-
-        dNdxi = elem_univ.dNdxi[iteration]
-        #print(dNdxi)
-        dNdeta = elem_univ.dNdeta[iteration]
-
-        dNidx_mat: np.ndarray = np.zeros((npc,1))
-        dNidy_mat: np.ndarray = np.zeros((npc,1))
-
-        for i in range (0, npc):
-            dNidx = scaling_matrix[0 ,0] * dNdxi[i] + scaling_matrix[0 ,1] * dNdeta[i]
-            dNidy = scaling_matrix[1 ,0] * dNdxi[i] + scaling_matrix[1 ,1] * dNdeta[i]
-            dNidx_mat[i, 0] = dNidx
-            dNidy_mat[i, 0] = dNidy
-        
-        self.matrix_H = conductivity * (dNidx_mat @ dNidx_mat.T + dNidy_mat @ dNidy_mat.T) * detJ
-        print(np.array2string(self.matrix_H, precision=5, separator=', '))'''
-
 class MatrixH:
     def __init__(self, elem_univ, scaling_matrix: np.ndarray, iteration: int, npc: int, conductivity: int, detJ: float):
         self.scaling_matrix: np.darray = scaling_matrix
         self.matrix_H: np.darray = np.zeros((4,4))
-        scaling_matrix_string = np.array2string(self.scaling_matrix, precision=5, separator=', ')
-        print(scaling_matrix_string)
         dNdxi = elem_univ.dNdxi[iteration]
-        #print(dNdxi)
         dNdeta = elem_univ.dNdeta[iteration]
-        #print(dNdeta)
         dNidx_mat: np.ndarray = np.zeros((4,1))
         dNidy_mat: np.ndarray = np.zeros((4,1))
 
@@ -97,9 +70,9 @@ class MatrixH:
             dNidx_mat[i, 0] = dNidx
             dNidy_mat[i, 0] = dNidy
         
-        print(np.array2string(dNidx_mat, precision=3, separator=', '))
-        print(detJ)
+        
         self.matrix_H = conductivity * (dNidx_mat @ dNidx_mat.T + dNidy_mat @ dNidy_mat.T) * detJ
+        #print(f"Matrix H for integration point {iteration + 1}")
         #print(np.array2string(self.matrix_H, precision=3, separator=', '))
 
 @dataclass
@@ -118,17 +91,17 @@ class Element:
     
     def initialize_matrixH(self, elem_univ, npc: int, conductivity: int, weights: List[Tuple]):
         for i in range(npc):
-            J: np.ndarray = self.jakobian[i].J
+            J1: np.ndarray = self.jakobian[i].J1
             detJ: float = self.jakobian[i].detJ
             rev_detJ: float = 1/detJ
-            scaling_matrix: np.ndarray = rev_detJ * J
+            scaling_matrix: np.ndarray = rev_detJ * J1
             self.matrixes_H.append(MatrixH(elem_univ, scaling_matrix, i, npc, conductivity, detJ))
 
 
         self.final_matrix_H: np.ndarray = np.zeros((4,4))
         for i in range(npc):
             self.matrixes_H[i].matrix_H
-            print(self.matrixes_H[i].matrix_H)
+            #print(self.matrixes_H[i].matrix_H)
             self.final_matrix_H += self.matrixes_H[i].matrix_H * weights[i][0] * weights[i][1]
         #print(self.final_matrix_H)
 
