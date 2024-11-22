@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple
 import numpy as np
-import math
 
 
 @dataclass
@@ -105,6 +104,15 @@ class Element:
             self.final_matrix_H += self.matrixes_H[i].matrix_H * weights[i][0] * weights[i][1]
         #print(self.final_matrix_H)
 
+    def agregate_matrixes_h(self, agregated_matrix_h):
+        print(self.nodes_ids)
+        agregation_formula = []
+        for i in self.nodes_ids:
+            for j in self.nodes_ids:
+                agregation_formula.append((i,j))
+
+        for i,elem in enumerate(self.final_matrix_H.flat):
+            agregated_matrix_h.matrix_h[agregation_formula[i][0]-1, agregation_formula[i][1]-1] += elem
 
     def __str__(self):
         if self.jakobian:
@@ -144,3 +152,15 @@ class ElemUniv:
 
     def __str__(self):
         return f"dNdxi: {self.dNdxi}\ndNdeta: {self.dNdeta}"
+    
+
+
+@dataclass
+class GlobalMatrixH:
+    nN: int
+    matrix_h: np.ndarray = field(init=False)
+    def __post_init__(self):
+        self.matrix_h = np.zeros((self.nN, self.nN))
+
+    def print_matrix(self):
+        print(np.array2string(self.matrix_h, precision=5, separator=', ', max_line_width=200))

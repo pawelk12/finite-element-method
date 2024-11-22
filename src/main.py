@@ -1,5 +1,5 @@
 import math
-from models import GlobalData, Node, Element, Grid, ElemUniv, Jakobian
+from models import Grid, ElemUniv, GlobalMatrixH
 from parse_data import read_global_data, read_coords, read_elements
 
 '''
@@ -105,9 +105,8 @@ print(element.final_matrix_H)
 '''
 
 
-
-#filepath = "../test_grid_data/Test1_4_4.txt"
-filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
+filepath = "../test_grid_data/Test1_4_4.txt"
+# filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
 global_data = read_global_data(filepath)
 nodes = read_coords(filepath)
 elements = read_elements(filepath)
@@ -150,9 +149,9 @@ integration_points = [(-math.sqrt(3)/math.sqrt(5), -math.sqrt(3)/math.sqrt(5)),
 
 weights_for_integration_points = [(5/9, 5/9), (5/9, 8/9), (5/9, 5/9),
                                   (8/9, 5/9), (8/9, 8/9), (8/9, 5/9),
-                                  (5/9, 5/9), (5/9, 8/9), (5/9, 5/9)]'''
-
-
+                                  (5/9, 5/9), (5/9, 8/9), (5/9, 5/9)]
+'''
+                                  
 
 #four-point Gaussian quadrature
 
@@ -187,12 +186,19 @@ weights_for_integration_points = [(0.347855, 0.347855), (0.347855, 0.652145), (0
                                   (0.652145, 0.347855), (0.652145, 0.652145), (0.652145, 0.652145), (0.652145, 0.347855),
                                   (0.347855, 0.347855), (0.347855, 0.652145), (0.347855, 0.652145), (0.347855, 0.347855)]
 
+
+
 elem_univ = ElemUniv(integration_points)
+
+global_matrix_h = GlobalMatrixH(global_data.nN)
 
 for element in grid.elements:
     element.initialize_jakobian(elem_univ, grid, npc=len(integration_points))
     element.initialize_matrixH(elem_univ, npc=len(integration_points),
                                conductivity=global_data.conductivity,
                                weights=weights_for_integration_points)
-    print(element.final_matrix_H)
+    
+    element.agregate_matrixes_h(global_matrix_h)
 
+
+global_matrix_h.print_matrix()
