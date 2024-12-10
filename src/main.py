@@ -1,6 +1,6 @@
 import math
 from models import Grid, ElemUniv, GlobalMatrixH
-from parse_data import read_global_data, read_coords, read_elements
+from parse_data import read_global_data, read_coords, read_elements, read_bc
 
 '''
 
@@ -109,6 +109,13 @@ filepath = "../test_grid_data/Test1_4_4.txt"
 # filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
 global_data = read_global_data(filepath)
 nodes = read_coords(filepath)
+bc_list = read_bc(filepath)
+print(bc_list)
+
+for i,node in enumerate(nodes, start=1):
+    if i in bc_list:
+        node.bc = True
+
 elements = read_elements(filepath)
 grid = Grid(global_data.nN, global_data.nE, nodes, elements)
 
@@ -188,7 +195,7 @@ weights_for_integration_points = [(0.347855, 0.347855), (0.347855, 0.652145), (0
 
 
 
-elem_univ = ElemUniv(integration_points)
+elem_univ = ElemUniv(integration_points, weights_for_integration_points, global_data.conductivity)
 
 global_matrix_h = GlobalMatrixH(global_data.nN)
 
@@ -199,6 +206,6 @@ for element in grid.elements:
                                weights=weights_for_integration_points)
     
     element.agregate_matrixes_h(global_matrix_h)
-
+    element.calculate_hbc_from_template(grid)
 
 global_matrix_h.print_matrix()

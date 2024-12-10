@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple
 import numpy as np
+import math
 
 
 @dataclass
 class Node:
     x: float
     y: float
-
-
+    bc: bool
 
 @dataclass
 class GlobalData:
@@ -81,11 +81,14 @@ class Element:
     jakobian: List[Jakobian] = None
     matrixes_H: List[MatrixH] = field(default_factory=list)
 
-    def get_node_coords(self, grid: 'Grid') -> List[Tuple[float, float]]:
+    def get_nodes_coords(self, grid: 'Grid') -> List[Tuple[float, float]]:
         return [(grid.nodes[node_id - 1].x, grid.nodes[node_id - 1].y) for node_id in self.nodes_ids]
 
+    def get_nodes_boundary_conditions(self, grid: 'Grid') -> List[bool]:
+        return [grid.nodes[node_id - 1].bc for node_id in self.nodes_ids]
+
     def initialize_jakobian(self, elem_univ, grid: 'Grid', npc: int):
-        element_coords = self.get_node_coords(grid)
+        element_coords = self.get_nodes_coords(grid)
         self.jakobian = [Jakobian(elem_univ, element_coords, i) for i in range(npc)]
     
     def initialize_matrixH(self, elem_univ, npc: int, conductivity: int, weights: List[Tuple]):
@@ -114,6 +117,20 @@ class Element:
         for i,elem in enumerate(self.final_matrix_H.flat):
             agregated_matrix_h.matrix_h[agregation_formula[i][0]-1, agregation_formula[i][1]-1] += elem
 
+
+    def calculate_hbc_from_template(self, grid: 'Grid'):
+        nodes_ids = self.get_nodes_coords(grid)
+        nodes_bc = self.get_nodes_boundary_conditions(grid)
+        print("Element "+ str(self.id))
+        print("nodes ids: ")
+        print(nodes_ids)
+        print("nodes bc: ")
+        print(nodes_bc)
+        print("------------------------------------------")
+
+
+
+
     def __str__(self):
         if self.jakobian:
             jakobian_str = "\n  ".join(str(j) for j in self.jakobian)
@@ -121,10 +138,6 @@ class Element:
             jakobian_str = "None"
         return f"Element(id={self.id}, nodes_ids={self.nodes_ids}, jakobian=[\n  {jakobian_str}\n])"
 
-@dataclass
-class Node:
-    x: float
-    y: float
 
 @dataclass
 class Grid:
@@ -134,9 +147,17 @@ class Grid:
     elements: List[Element] = field(default_factory=list)
 
 class ElemUniv:
-    def __init__(self, integration_points):
+    def __init__(self, integration_points, weights, conductivity):
         self.dNdxi = []
         self.dNdeta = []
+        npc = math.sqrt(len(integration_points))
+        # bottom, right, top, left
+        self.surfaces = [np.zeros((int(npc), 4)), np.zeros((int(npc), 4)),
+            np.zeros((int(npc), 4)), np.zeros((int(npc), 4))]
+
+        self.hbc_templates = [np.zeros((int(npc), 4)), np.zeros((int(npc), 4)),
+            np.zeros((int(npc), 4)), np.zeros((int(npc), 4))]
+
         for point in integration_points:
             dN1dxi = -0.25 * (1 - point[1])
             dN2dxi = 0.25 * (1 - point[1])
@@ -149,6 +170,83 @@ class ElemUniv:
             dN3deta = 0.25 * (1 + point[0])
             dN4deta = 0.25 * (1 - point[0])
             self.dNdeta.append((dN1deta, dN2deta, dN3deta, dN4deta))
+
+
+
+        #version for four-point Gaussian quadrature:
+        points_bottom_tuples = integration_points[::4]
+        points_bottom = [] # integration poins casted into bottom edge of element
+        points_top =[]
+
+        for point in points_bottom_tuples:
+            point = list(point)
+            point[1] = -1
+            points_bottom.append(point.copy())
+            point[1] = 1
+            points_top.append(point.copy())
+
+        points_right_tuples = integration_points[:4:]
+        points_right = []
+        points_left = []
+
+        for point in points_right_tuples:
+            point = list(point)
+            point[0] = -1
+            points_left.append(point.copy())
+            point[0] = 1
+            points_right.append(point.copy())
+        
+
+        for i,point in enumerate(points_bottom):
+            bottom_surface = self.surfaces[0]
+            bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
+            bottom_surface[i][1] = 0.25*(1 + point[0])*(1 - point[1])
+            bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
+            bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
+
+        for i,point in enumerate(points_right):
+            bottom_surface = self.surfaces[1]
+            bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
+            bottom_surface[i][1] = 0.25*(1 + point[0])*(1 - point[1])
+            bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
+            bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
+
+
+        for i,point in enumerate(points_top):
+            bottom_surface = self.surfaces[2]
+            bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
+            bottom_surface[i][1] = 0.25*(1 + point[0])*(1 - point[1])
+            bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
+            bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
+
+        for i,point in enumerate(points_left):
+            bottom_surface = self.surfaces[3]
+            bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
+            bottom_surface[i][1] = 0.25*(1 + point[0])*(1 - point[1])
+            bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
+            bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
+
+
+        for x in self.surfaces:
+            print(np.array2string(x))
+
+        for j,surface in enumerate(self.surfaces):
+            for i in range(int(npc)):
+                row = np.array(surface[i]).reshape(1, -1)
+                multiplied_matrix = row.T @ row
+                multiplied_matrix_times_weight = multiplied_matrix * weights[i][1] * conductivity
+                print(multiplied_matrix_times_weight)
+                self.hbc_templates[j] += multiplied_matrix_times_weight
+            
+
+
+        print("hbc matrixes for every element without jacobi det")
+        print("bottom - right - top- left")
+        for i in range(4):
+            print(self.hbc_templates[i])
+        
+                
+
 
     def __str__(self):
         return f"dNdxi: {self.dNdxi}\ndNdeta: {self.dNdeta}"

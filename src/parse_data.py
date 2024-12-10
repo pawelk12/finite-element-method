@@ -30,10 +30,29 @@ def read_coords(filename: str) -> List[Node]:
                 if read:
                     parts = line.split(",")
                     x, y = float(parts[1]), float(parts[2].strip())
-                    nodes.append(Node(x, y))
+                    nodes.append(Node(x, y, 0))
     except FileNotFoundError:
         print("Failed to open the file.")
     return nodes
+
+def read_bc(filename: str) -> List[int]:
+    bc_nodes_list = []
+    try:
+        with open(filename, "r") as file:
+            read = False
+            for line in file:
+                if line.startswith("*BC"):
+                    read = True
+                    continue
+                if read:
+                    parts = line.split(",")
+                    bc_nodes_list = [int(part.strip()) for part in parts]
+                    # for part in parts:
+                        # node_id = int(part.strip())
+                        # bc_nodes_list.append(node_id)
+    except FileNotFoundError:
+        print("Failed to open the file.")
+    return bc_nodes_list
 
 def read_elements(filename: str) -> List[Element]:
     elements = []
