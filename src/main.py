@@ -206,6 +206,6 @@ for element in grid.elements:
                                weights=weights_for_integration_points)
     
     element.agregate_matrixes_h(global_matrix_h)
-    element.calculate_hbc_from_template(grid)
+    element.calculate_hbc_from_template(grid, elem_univ)
 
 global_matrix_h.print_matrix()

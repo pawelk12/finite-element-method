@@ -118,15 +118,28 @@ class Element:
             agregated_matrix_h.matrix_h[agregation_formula[i][0]-1, agregation_formula[i][1]-1] += elem
 
 
-    def calculate_hbc_from_template(self, grid: 'Grid'):
-        nodes_ids = self.get_nodes_coords(grid)
+    def calculate_hbc_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
+        nodes_coords = self.get_nodes_coords(grid)
         nodes_bc = self.get_nodes_boundary_conditions(grid)
         print("Element "+ str(self.id))
         print("nodes ids: ")
-        print(nodes_ids)
+        print(self.nodes_ids)
         print("nodes bc: ")
         print(nodes_bc)
         print("------------------------------------------")
+        for i in range(1,len(self.nodes_ids)):
+            if(nodes_bc[i-1] == True and nodes_bc[i] == True):
+                print(elem_univ.hbc_templates[i-1])
+                #d=√((x_2-x_1)²+(y_2-y_1)²)
+                pitagorean_distance = math.sqrt(pow(nodes_coords[i][0]-nodes_coords[i-1][0],2) + 
+                                                pow(nodes_coords[i][1]-nodes_coords[i-1][1],2))
+                print(pitagorean_distance)
+            if(i==3):
+                if(nodes_bc[i] == True and nodes_bc[0]==True):
+                    print(elem_univ.hbc_templates[i])
+                    
+
+
 
 
 
