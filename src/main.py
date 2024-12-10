@@ -105,8 +105,8 @@ print(element.final_matrix_H)
 '''
 
 
-filepath = "../test_grid_data/Test1_4_4.txt"
-# filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
+# filepath = "../test_grid_data/Test1_4_4.txt"
+filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
 global_data = read_global_data(filepath)
 nodes = read_coords(filepath)
 bc_list = read_bc(filepath)
@@ -195,7 +195,7 @@ weights_for_integration_points = [(0.347855, 0.347855), (0.347855, 0.652145), (0
 
 
 
-elem_univ = ElemUniv(integration_points, weights_for_integration_points, global_data.conductivity)
+elem_univ = ElemUniv(integration_points, weights_for_integration_points, global_data.alfa)
 
 global_matrix_h = GlobalMatrixH(global_data.nN)
 

@@ -121,26 +121,19 @@ class Element:
     def calculate_hbc_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
         nodes_coords = self.get_nodes_coords(grid)
         nodes_bc = self.get_nodes_boundary_conditions(grid)
-        print("Element "+ str(self.id))
-        print("nodes ids: ")
-        print(self.nodes_ids)
-        print("nodes bc: ")
-        print(nodes_bc)
-        print("------------------------------------------")
-        for i in range(1,len(self.nodes_ids)):
-            if(nodes_bc[i-1] == True and nodes_bc[i] == True):
-                print(elem_univ.hbc_templates[i-1])
-                #d=√((x_2-x_1)²+(y_2-y_1)²)
-                pitagorean_distance = math.sqrt(pow(nodes_coords[i][0]-nodes_coords[i-1][0],2) + 
-                                                pow(nodes_coords[i][1]-nodes_coords[i-1][1],2))
-                print(pitagorean_distance)
-            if(i==3):
-                if(nodes_bc[i] == True and nodes_bc[0]==True):
-                    print(elem_univ.hbc_templates[i])
-                    
+        self.hbc = np.zeros((4,4))
 
+        for i in range(4):  
+            next_i = (i + 1) % 4  
+            if nodes_bc[i] == True and nodes_bc[next_i] == True:
+                pitagorean_distance = math.sqrt(pow(nodes_coords[next_i][0] - nodes_coords[i][0], 2) + 
+                                        pow(nodes_coords[next_i][1] - nodes_coords[i][1], 2))
+                detJ = pitagorean_distance / 2
+                self.hbc += elem_univ.hbc_templates[i] * detJ
 
-
+        print(f"Hbc - element {self.id}")
+        print(self.hbc)
+        print("----------------")
 
 
 
@@ -160,7 +153,7 @@ class Grid:
     elements: List[Element] = field(default_factory=list)
 
 class ElemUniv:
-    def __init__(self, integration_points, weights, conductivity):
+    def __init__(self, integration_points, weights, alfa):
         self.dNdxi = []
         self.dNdeta = []
         npc = math.sqrt(len(integration_points))
@@ -247,7 +240,7 @@ class ElemUniv:
             for i in range(int(npc)):
                 row = np.array(surface[i]).reshape(1, -1)
                 multiplied_matrix = row.T @ row
-                multiplied_matrix_times_weight = multiplied_matrix * weights[i][1] * conductivity
+                multiplied_matrix_times_weight = multiplied_matrix * weights[i][1] * alfa
                 print(multiplied_matrix_times_weight)
                 self.hbc_templates[j] += multiplied_matrix_times_weight
             
