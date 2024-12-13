@@ -194,11 +194,11 @@ class ElemUniv:
         self.surfaces = [np.zeros((int(npc), 4)), np.zeros((int(npc), 4)),
             np.zeros((int(npc), 4)), np.zeros((int(npc), 4))]
 
-        self.hbc_templates = [np.zeros((int(npc), 4)), np.zeros((int(npc), 4)),
-            np.zeros((int(npc), 4)), np.zeros((int(npc), 4))]
+        self.hbc_templates = [np.zeros((4, 4)), np.zeros((4, 4)),
+            np.zeros((4, 4)), np.zeros((4, 4))]
 
-        self.vector_p_templates = [np.zeros((int(npc), 1)), np.zeros((int(npc), 1)),
-            np.zeros((int(npc), 1)), np.zeros((int(npc), 1))]
+        self.vector_p_templates = [np.zeros((4, 1)), np.zeros((4, 1)),
+            np.zeros((4, 1)), np.zeros((4, 1))]
         
         for point in integration_points:
             dN1dxi = -0.25 * (1 - point[1])
@@ -216,7 +216,8 @@ class ElemUniv:
 
 
         #version for four-point Gaussian quadrature:
-        points_bottom_tuples = integration_points[::4]
+        #points_bottom_tuples = integration_points[::4]
+        points_bottom_tuples = integration_points[::int(npc)]
         points_bottom = [] # integration poins casted into bottom edge of element
         points_top =[]
 
@@ -227,7 +228,8 @@ class ElemUniv:
             point[1] = 1
             points_top.append(point.copy())
 
-        points_right_tuples = integration_points[:4:]
+        points_right_tuples = integration_points[:int(npc):]
+        #points_right_tuples = integration_points[:4:]
         points_right = []
         points_left = []
 
