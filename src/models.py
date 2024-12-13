@@ -105,7 +105,7 @@ class Element:
             self.matrixes_H[i].matrix_H
             #print(self.matrixes_H[i].matrix_H)
             self.final_matrix_H += self.matrixes_H[i].matrix_H * weights[i][0] * weights[i][1]
-        #print(self.final_matrix_H)
+        print(self.final_matrix_H)
 
     def agregate_matrixes_h(self, agregated_matrix_h):
         print(self.nodes_ids)
@@ -135,6 +135,39 @@ class Element:
         print(self.hbc)
         print("----------------")
 
+    def add_hbc_matrix_to_h(self):
+        print("Matrix H")
+        print(self.final_matrix_H)
+        print("Matrix hbc")
+        print(self.hbc)
+        print("------")
+        self.final_matrix_H = self.final_matrix_H + self.hbc
+
+    def calculate_vector_p_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
+        nodes_coords = self.get_nodes_coords(grid)
+        nodes_bc = self.get_nodes_boundary_conditions(grid)
+        self.p = np.zeros((4,1))
+
+        for i in range(4):  
+            next_i = (i + 1) % 4  
+            if nodes_bc[i] == True and nodes_bc[next_i] == True:
+                pitagorean_distance = math.sqrt(pow(nodes_coords[next_i][0] - nodes_coords[i][0], 2) + 
+                                        pow(nodes_coords[next_i][1] - nodes_coords[i][1], 2))
+                detJ = pitagorean_distance / 2
+                self.p += elem_univ.vector_p_templates[i] * detJ
+
+        print(f"P - element {self.id}")
+        print(self.p)
+        print("----------------")
+        
+    def agregate_vectors_p(self, agregated_vector_p):
+        print(self.nodes_ids)
+        agregation_formula = []
+        for i in self.nodes_ids:
+            agregation_formula.append(i)
+
+        for i,elem in enumerate(self.p.flat):
+            agregated_vector_p.vector_P[agregation_formula[i]-1] += elem
 
 
     def __str__(self):
@@ -153,7 +186,7 @@ class Grid:
     elements: List[Element] = field(default_factory=list)
 
 class ElemUniv:
-    def __init__(self, integration_points, weights, alfa):
+    def __init__(self, integration_points, weights, alfa, tot):
         self.dNdxi = []
         self.dNdeta = []
         npc = math.sqrt(len(integration_points))
@@ -164,6 +197,9 @@ class ElemUniv:
         self.hbc_templates = [np.zeros((int(npc), 4)), np.zeros((int(npc), 4)),
             np.zeros((int(npc), 4)), np.zeros((int(npc), 4))]
 
+        self.vector_p_templates = [np.zeros((int(npc), 1)), np.zeros((int(npc), 1)),
+            np.zeros((int(npc), 1)), np.zeros((int(npc), 1))]
+        
         for point in integration_points:
             dN1dxi = -0.25 * (1 - point[1])
             dN2dxi = 0.25 * (1 - point[1])
@@ -241,8 +277,10 @@ class ElemUniv:
                 row = np.array(surface[i]).reshape(1, -1)
                 multiplied_matrix = row.T @ row
                 multiplied_matrix_times_weight = multiplied_matrix * weights[i][1] * alfa
-                print(multiplied_matrix_times_weight)
+                #print(multiplied_matrix_times_weight)
                 self.hbc_templates[j] += multiplied_matrix_times_weight
+                multiplied_vector_p = row.T * tot * alfa *weights[i][1]
+                self.vector_p_templates[j] += multiplied_vector_p
             
 
 
@@ -268,3 +306,14 @@ class GlobalMatrixH:
 
     def print_matrix(self):
         print(np.array2string(self.matrix_h, precision=5, separator=', ', max_line_width=200))
+
+
+@dataclass
+class GlobalVectorP:
+    nN: int
+    vector_P: np.ndarray = field(init=False)
+    def __post_init__(self):
+        self.vector_P = np.zeros((self.nN, 1))
+
+    def print_vector(self):
+        print(np.array2string(self.vector_P, precision=5, separator=', ', max_line_width=200))
