@@ -105,10 +105,10 @@ class Element:
             self.matrixes_H[i].matrix_H
             #print(self.matrixes_H[i].matrix_H)
             self.final_matrix_H += self.matrixes_H[i].matrix_H * weights[i][0] * weights[i][1]
-        print(self.final_matrix_H)
+        #print(self.final_matrix_H)
 
     def agregate_matrixes_h(self, agregated_matrix_h):
-        print(self.nodes_ids)
+        # print(self.nodes_ids)
         agregation_formula = []
         for i in self.nodes_ids:
             for j in self.nodes_ids:
@@ -131,17 +131,20 @@ class Element:
                 detJ = pitagorean_distance / 2
                 self.hbc += elem_univ.hbc_templates[i] * detJ
 
-        print(f"Hbc - element {self.id}")
-        print(self.hbc)
-        print("----------------")
+        #print(f"Hbc - element {self.id}")
+        #print(self.hbc)
+        #print("----------------")
 
     def add_hbc_matrix_to_h(self):
+        print("Element id: "+str(self.id))
         print("Matrix H")
         print(self.final_matrix_H)
         print("Matrix hbc")
         print(self.hbc)
-        print("------")
         self.final_matrix_H = self.final_matrix_H + self.hbc
+        print("Added matrixes")
+        print(self.final_matrix_H)
+        print("------")
 
     def calculate_vector_p_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
         nodes_coords = self.get_nodes_coords(grid)
@@ -156,12 +159,12 @@ class Element:
                 detJ = pitagorean_distance / 2
                 self.p += elem_univ.vector_p_templates[i] * detJ
 
-        print(f"P - element {self.id}")
-        print(self.p)
-        print("----------------")
+        #print(f"P - element {self.id}")
+        #print(self.p)
+        #print("----------------")
         
     def agregate_vectors_p(self, agregated_vector_p):
-        print(self.nodes_ids)
+        #print(self.nodes_ids)
         agregation_formula = []
         for i in self.nodes_ids:
             agregation_formula.append(i)
@@ -240,6 +243,19 @@ class ElemUniv:
             point[0] = 1
             points_right.append(point.copy())
         
+        #printing
+        print("Points bottom")
+        for point in points_bottom:
+            print(point)
+        print("Points right")
+        for point in points_right:
+            print(point)
+        print("Points top")
+        for point in points_top:
+            print(point)
+        print("Points left")
+        for point in points_left:
+            print(point)
 
         for i,point in enumerate(points_bottom):
             bottom_surface = self.surfaces[0]
@@ -272,7 +288,10 @@ class ElemUniv:
 
 
         for x in self.surfaces:
-            print(np.array2string(x))
+            #print("HBC TEMPLATES")
+            #print(np.array2string(x))
+            pass
+
 
         for j,surface in enumerate(self.surfaces):
             for i in range(int(npc)):
@@ -286,10 +305,16 @@ class ElemUniv:
             
 
 
-        print("hbc matrixes for every element without jacobi det")
-        print("bottom - right - top- left")
+        #print("hbc matrixes for every element without jacobi det")
+        #print("bottom - right - top- left")
         for i in range(4):
+            print("HBC TEMPLATES")
             print(self.hbc_templates[i])
+
+
+
+sprawdzic templaty dla dwoch punktow calkowania
+
         
                 
 

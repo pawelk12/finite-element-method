@@ -105,8 +105,8 @@ print(element.final_matrix_H)
 '''
 
 
-# filepath = "../test_grid_data/Test1_4_4.txt"
-filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
+filepath = "../test_grid_data/Test1_4_4.txt"
+# filepath = "../test_grid_data/Test2_4_4_MixGrid.txt"
 global_data = read_global_data(filepath)
 nodes = read_coords(filepath)
 bc_list = read_bc(filepath)
