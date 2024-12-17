@@ -71,8 +71,6 @@ class MatrixH:
         
         
         self.matrix_H = conductivity * (dNidx_mat @ dNidx_mat.T + dNidy_mat @ dNidy_mat.T) * detJ
-        #print(f"Matrix H for integration point {iteration + 1}")
-        #print(np.array2string(self.matrix_H, precision=3, separator=', '))
 
 @dataclass
 class Element:
@@ -119,17 +117,20 @@ class Element:
 
 
     def calculate_hbc_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
-        nodes_coords = self.get_nodes_coords(grid)
-        nodes_bc = self.get_nodes_boundary_conditions(grid)
-        self.hbc = np.zeros((4,4))
+        nodes_coords = self.get_nodes_coords(grid)  # Współrzędne węzłów elementu
+        nodes_bc = self.get_nodes_boundary_conditions(grid)  # Warunki brzegowe
+        self.hbc = np.zeros((4, 4))  # Zerowanie macierzy HBC przed obliczeniem
 
-        for i in range(4):  
-            next_i = (i + 1) % 4  
-            if nodes_bc[i] == True and nodes_bc[next_i] == True:
-                pitagorean_distance = math.sqrt(pow(nodes_coords[next_i][0] - nodes_coords[i][0], 2) + 
-                                        pow(nodes_coords[next_i][1] - nodes_coords[i][1], 2))
-                detJ = pitagorean_distance / 2
-                self.hbc += elem_univ.hbc_templates[i] * detJ
+        for i in range(4):  # Iteracja po wszystkich krawędziach elementu
+            next_i = (i + 1) % 4  # Kolejny węzeł na krawędzi
+            if nodes_bc[i] and nodes_bc[next_i]:  # Sprawdzenie warunków brzegowych na krawędzi
+                pitagorean_distance = math.sqrt(
+                    pow(nodes_coords[next_i][0] - nodes_coords[i][0], 2) +
+                    pow(nodes_coords[next_i][1] - nodes_coords[i][1], 2)
+                )
+                detJ = pitagorean_distance / 2  # Długość krawędzi dzielona na 2
+                self.hbc += elem_univ.hbc_templates[i] * detJ  # Dodanie do HBC
+
 
         #print(f"Hbc - element {self.id}")
         #print(self.hbc)
@@ -159,12 +160,9 @@ class Element:
                 detJ = pitagorean_distance / 2
                 self.p += elem_univ.vector_p_templates[i] * detJ
 
-        #print(f"P - element {self.id}")
-        #print(self.p)
-        #print("----------------")
         
     def agregate_vectors_p(self, agregated_vector_p):
-        #print(self.nodes_ids)
+
         agregation_formula = []
         for i in self.nodes_ids:
             agregation_formula.append(i)
@@ -217,9 +215,6 @@ class ElemUniv:
             self.dNdeta.append((dN1deta, dN2deta, dN3deta, dN4deta))
 
 
-
-        #version for four-point Gaussian quadrature:
-        #points_bottom_tuples = integration_points[::4]
         points_bottom_tuples = integration_points[::int(npc)]
         points_bottom = [] # integration poins casted into bottom edge of element
         points_top =[]
@@ -231,8 +226,11 @@ class ElemUniv:
             point[1] = 1
             points_top.append(point.copy())
 
-        points_right_tuples = integration_points[:int(npc):]
-        #points_right_tuples = integration_points[:4:]
+        if(int(npc) == 2):
+            points_right_tuples = integration_points[::int(npc)]
+        else:
+            points_right_tuples = integration_points[:int(npc):]
+
         points_right = []
         points_left = []
 
@@ -241,21 +239,22 @@ class ElemUniv:
             point[0] = -1
             points_left.append(point.copy())
             point[0] = 1
+            # print(point)
             points_right.append(point.copy())
         
         #printing
-        print("Points bottom")
-        for point in points_bottom:
-            print(point)
-        print("Points right")
-        for point in points_right:
-            print(point)
-        print("Points top")
-        for point in points_top:
-            print(point)
-        print("Points left")
-        for point in points_left:
-            print(point)
+        # print("Points bottom")
+        # for point in points_bottom:
+        #     print(point)
+        # print("Points right")
+        # for point in points_right:
+        #     print(point)
+        # print("Points top")
+        # for point in points_top:
+        #     print(point)
+        # print("Points left")
+        # for point in points_left:
+        #     print(point)
 
         for i,point in enumerate(points_bottom):
             bottom_surface = self.surfaces[0]
@@ -287,10 +286,10 @@ class ElemUniv:
             bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
 
 
-        for x in self.surfaces:
-            #print("HBC TEMPLATES")
-            #print(np.array2string(x))
-            pass
+        # # for x in self.surfaces:
+        # print("HBC SURFACES N1 N2 N3 N4")
+        # print(np.array2string(self.surfaces[3]))
+
 
 
         for j,surface in enumerate(self.surfaces):
@@ -298,26 +297,9 @@ class ElemUniv:
                 row = np.array(surface[i]).reshape(1, -1)
                 multiplied_matrix = row.T @ row
                 multiplied_matrix_times_weight = multiplied_matrix * weights[i][1] * alfa
-                #print(multiplied_matrix_times_weight)
                 self.hbc_templates[j] += multiplied_matrix_times_weight
                 multiplied_vector_p = row.T * tot * alfa *weights[i][1]
                 self.vector_p_templates[j] += multiplied_vector_p
-            
-
-
-        #print("hbc matrixes for every element without jacobi det")
-        #print("bottom - right - top- left")
-        for i in range(4):
-            print("HBC TEMPLATES")
-            print(self.hbc_templates[i])
-
-
-
-sprawdzic templaty dla dwoch punktow calkowania
-
-        
-                
-
 
     def __str__(self):
         return f"dNdxi: {self.dNdxi}\ndNdeta: {self.dNdeta}"

@@ -205,9 +205,6 @@ for element in grid.elements:
     element.initialize_matrixH(elem_univ, npc=len(integration_points),
                                conductivity=global_data.conductivity,
                                weights=weights_for_integration_points)
-    
-    #element.agregate_matrixes_h(global_matrix_h)
-    #element.calculate_hbc_from_template(grid, elem_univ)
 
     element.calculate_hbc_from_template(grid, elem_univ)
     element.add_hbc_matrix_to_h()
