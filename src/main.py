@@ -1,6 +1,7 @@
 import math
 from models import Grid, ElemUniv, GlobalMatrixH, GlobalVectorP
 from parse_data import read_global_data, read_coords, read_elements, read_bc
+import numpy as np
 
 '''
 
@@ -213,5 +214,10 @@ for element in grid.elements:
     element.agregate_vectors_p(global_vector_p)
 
 
+
+#{t}=−1 * [H]^−1 * {P}
 global_matrix_h.print_matrix()
 global_vector_p.print_vector()
+vector_t = -1 * (np.linalg.inv(global_matrix_h.matrix_h) @ global_vector_p.vector_P)
+print(vector_t)
+
