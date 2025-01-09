@@ -72,12 +72,34 @@ class MatrixH:
         
         self.matrix_H = conductivity * (dNidx_mat @ dNidx_mat.T + dNidy_mat @ dNidy_mat.T) * detJ
 
+
+class MatrixC:
+    #(elem_univ, i, npc, density, specific_heat, detJ)
+    # integration_points = [(-1/math.sqrt(3), -1/math.sqrt(3)), 
+    #                   (1/math.sqrt(3), -1/math.sqrt(3)),
+    #                   (1/math.sqrt(3), 1/math.sqrt(3)), 
+    #                   (-1/math.sqrt(3), 1/math.sqrt(3))]
+    def __init__(self, integration_points, iteration: int, npc: int, density: int, specific_heat: int, detJ: float):
+        self.matrix_C: np.darray = np.zeros((4,4))
+        N: np.darray = np.zeros((4,1))
+        point = integration_points[iteration]
+
+        N[0,0] = 0.25*(1 - point[0])*(1 - point[1])
+        N[1,0] = 0.25*(1 + point[0])*(1 - point[1])
+        N[2,0] = 0.25*(1 + point[0])*(1 + point[1])
+        N[3,0] = 0.25*(1 - point[0])*(1 + point[1])
+
+        self.matrix_C = density * specific_heat * (N @ N.T) * detJ
+        # print(self.matrix_C)
+
+
 @dataclass
 class Element:
     id: int
     nodes_ids: Tuple[int, int, int, int]
     jakobian: List[Jakobian] = None
     matrixes_H: List[MatrixH] = field(default_factory=list)
+    matrixes_C: List[MatrixC] = field(default_factory=list)
 
     def get_nodes_coords(self, grid: 'Grid') -> List[Tuple[float, float]]:
         return [(grid.nodes[node_id - 1].x, grid.nodes[node_id - 1].y) for node_id in self.nodes_ids]
@@ -146,6 +168,30 @@ class Element:
         print("Added matrixes")
         print(self.final_matrix_H)
         print("------")
+
+    def initialize_matrixC(self, integration_points, npc: int, density: int, specific_heat: int, weights: List[Tuple]):
+        for i in range(npc):
+            detJ: float = self.jakobian[i].detJ
+            self.matrixes_C.append(MatrixC(integration_points, i, npc, density, specific_heat, detJ))
+
+        self.final_matrix_C: np.ndarray = np.zeros((4,4))
+        for i in range(npc):
+            self.matrixes_C[i].matrix_C
+            #print(self.matrixes_H[i].matrix_H)
+            self.final_matrix_C += self.matrixes_C[i].matrix_C * weights[i][0] * weights[i][1]
+        print("macierz c element id - "+str(self.id))
+        print(self.final_matrix_C)
+
+    def agregate_matrixes_c(self, agregated_matrix_c):
+        # print(self.nodes_ids)
+        agregation_formula = []
+        for i in self.nodes_ids:
+            for j in self.nodes_ids:
+                agregation_formula.append((i,j))
+
+        for i,elem in enumerate(self.final_matrix_C.flat):
+            agregated_matrix_c.matrix_c[agregation_formula[i][0]-1, agregation_formula[i][1]-1] += elem
+
 
     def calculate_vector_p_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
         nodes_coords = self.get_nodes_coords(grid)
@@ -315,6 +361,17 @@ class GlobalMatrixH:
 
     def print_matrix(self):
         print(np.array2string(self.matrix_h, precision=5, separator=', ', max_line_width=200))
+
+
+@dataclass
+class GlobalMatrixC:
+    nN: int
+    matrix_c: np.ndarray = field(init=False)
+    def __post_init__(self):
+        self.matrix_c = np.zeros((self.nN, self.nN))
+
+    def print_matrix(self):
+        print(np.array2string(self.matrix_c, precision=5, separator=', ', max_line_width=200))
 
 
 @dataclass

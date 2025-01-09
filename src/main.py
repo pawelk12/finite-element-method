@@ -1,5 +1,5 @@
 import math
-from models import Grid, ElemUniv, GlobalMatrixH, GlobalVectorP
+from models import Grid, ElemUniv, GlobalMatrixH, GlobalMatrixC, GlobalVectorP
 from parse_data import read_global_data, read_coords, read_elements, read_bc
 import numpy as np
 
@@ -140,8 +140,8 @@ integration_points = [(-1/math.sqrt(3), -1/math.sqrt(3)),
                       (1/math.sqrt(3), 1/math.sqrt(3)), 
                       (-1/math.sqrt(3), 1/math.sqrt(3))]
 weights_for_integration_points = [(1, 1), (1, 1), (1, 1), (1, 1)]
-'''
 
+'''
 
 #three-point Gaussian quadrature
 '''
@@ -199,6 +199,7 @@ weights_for_integration_points = [(0.347855, 0.347855), (0.347855, 0.652145), (0
 elem_univ = ElemUniv(integration_points, weights_for_integration_points, global_data.alfa, global_data.tot)
 
 global_matrix_h = GlobalMatrixH(global_data.nN)
+global_matrix_c = GlobalMatrixC(global_data.nN)
 global_vector_p = GlobalVectorP(global_data.nN)
 
 for element in grid.elements:
@@ -207,9 +208,16 @@ for element in grid.elements:
                                conductivity=global_data.conductivity,
                                weights=weights_for_integration_points)
 
+    element.initialize_matrixC(integration_points, npc=len(integration_points),
+                               density=global_data.density,
+                               specific_heat=global_data.specific_heat,
+                               weights=weights_for_integration_points)
+
+
     element.calculate_hbc_from_template(grid, elem_univ)
     element.add_hbc_matrix_to_h()
     element.agregate_matrixes_h(global_matrix_h)
+    element.agregate_matrixes_c(global_matrix_c)
     element.calculate_vector_p_from_template(grid, elem_univ)
     element.agregate_vectors_p(global_vector_p)
 
@@ -217,6 +225,8 @@ for element in grid.elements:
 
 #{t}=−1 * [H]^−1 * {P}
 global_matrix_h.print_matrix()
+print("matrix c")
+global_matrix_c.print_matrix()
 global_vector_p.print_vector()
 vector_t = -1 * (np.linalg.inv(global_matrix_h.matrix_h) @ global_vector_p.vector_P)
 print(vector_t)
