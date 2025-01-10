@@ -53,7 +53,6 @@ class Jakobian:
         return f"Jakobian(J={J_str}, \nJ1={J1_str},\n detJ={self.detJ})"
 
 
-
 class MatrixH:
     def __init__(self, elem_univ, scaling_matrix: np.ndarray, iteration: int, npc: int, conductivity: int, detJ: float):
         self.scaling_matrix: np.darray = scaling_matrix
@@ -74,11 +73,6 @@ class MatrixH:
 
 
 class MatrixC:
-    #(elem_univ, i, npc, density, specific_heat, detJ)
-    # integration_points = [(-1/math.sqrt(3), -1/math.sqrt(3)), 
-    #                   (1/math.sqrt(3), -1/math.sqrt(3)),
-    #                   (1/math.sqrt(3), 1/math.sqrt(3)), 
-    #                   (-1/math.sqrt(3), 1/math.sqrt(3))]
     def __init__(self, integration_points, iteration: int, npc: int, density: int, specific_heat: int, detJ: float):
         self.matrix_C: np.darray = np.zeros((4,4))
         N: np.darray = np.zeros((4,1))
@@ -90,7 +84,6 @@ class MatrixC:
         N[3,0] = 0.25*(1 - point[0])*(1 + point[1])
 
         self.matrix_C = density * specific_heat * (N @ N.T) * detJ
-        # print(self.matrix_C)
 
 
 @dataclass
@@ -123,12 +116,9 @@ class Element:
         self.final_matrix_H: np.ndarray = np.zeros((4,4))
         for i in range(npc):
             self.matrixes_H[i].matrix_H
-            #print(self.matrixes_H[i].matrix_H)
             self.final_matrix_H += self.matrixes_H[i].matrix_H * weights[i][0] * weights[i][1]
-        #print(self.final_matrix_H)
 
     def agregate_matrixes_h(self, agregated_matrix_h):
-        # print(self.nodes_ids)
         agregation_formula = []
         for i in self.nodes_ids:
             for j in self.nodes_ids:
@@ -139,35 +129,24 @@ class Element:
 
 
     def calculate_hbc_from_template(self, grid: 'Grid', elem_univ: 'ElemUniv'):
-        nodes_coords = self.get_nodes_coords(grid)  # Współrzędne węzłów elementu
-        nodes_bc = self.get_nodes_boundary_conditions(grid)  # Warunki brzegowe
-        self.hbc = np.zeros((4, 4))  # Zerowanie macierzy HBC przed obliczeniem
+        nodes_coords = self.get_nodes_coords(grid)
+        nodes_bc = self.get_nodes_boundary_conditions(grid)
+        self.hbc = np.zeros((4, 4))
 
-        for i in range(4):  # Iteracja po wszystkich krawędziach elementu
-            next_i = (i + 1) % 4  # Kolejny węzeł na krawędzi
-            if nodes_bc[i] and nodes_bc[next_i]:  # Sprawdzenie warunków brzegowych na krawędzi
+        for i in range(4):  # iterate throuh every edge in element
+            next_i = (i + 1) % 4  # next node on the edge
+            if nodes_bc[i] and nodes_bc[next_i]:  # check boundary condition on the edge
                 pitagorean_distance = math.sqrt(
                     pow(nodes_coords[next_i][0] - nodes_coords[i][0], 2) +
                     pow(nodes_coords[next_i][1] - nodes_coords[i][1], 2)
                 )
-                detJ = pitagorean_distance / 2  # Długość krawędzi dzielona na 2
-                self.hbc += elem_univ.hbc_templates[i] * detJ  # Dodanie do HBC
+                detJ = pitagorean_distance / 2
+                self.hbc += elem_univ.hbc_templates[i] * detJ
 
-
-        #print(f"Hbc - element {self.id}")
-        #print(self.hbc)
-        #print("----------------")
 
     def add_hbc_matrix_to_h(self):
-        print("Element id: "+str(self.id))
-        print("Matrix H")
-        print(self.final_matrix_H)
-        print("Matrix hbc")
-        print(self.hbc)
         self.final_matrix_H = self.final_matrix_H + self.hbc
-        print("Added matrixes")
-        print(self.final_matrix_H)
-        print("------")
+
 
     def initialize_matrixC(self, integration_points, npc: int, density: int, specific_heat: int, weights: List[Tuple]):
         for i in range(npc):
@@ -177,13 +156,9 @@ class Element:
         self.final_matrix_C: np.ndarray = np.zeros((4,4))
         for i in range(npc):
             self.matrixes_C[i].matrix_C
-            #print(self.matrixes_H[i].matrix_H)
             self.final_matrix_C += self.matrixes_C[i].matrix_C * weights[i][0] * weights[i][1]
-        print("macierz c element id - "+str(self.id))
-        print(self.final_matrix_C)
 
     def agregate_matrixes_c(self, agregated_matrix_c):
-        # print(self.nodes_ids)
         agregation_formula = []
         for i in self.nodes_ids:
             for j in self.nodes_ids:
@@ -285,23 +260,8 @@ class ElemUniv:
             point[0] = -1
             points_left.append(point.copy())
             point[0] = 1
-            # print(point)
             points_right.append(point.copy())
         
-        #printing
-        # print("Points bottom")
-        # for point in points_bottom:
-        #     print(point)
-        # print("Points right")
-        # for point in points_right:
-        #     print(point)
-        # print("Points top")
-        # for point in points_top:
-        #     print(point)
-        # print("Points left")
-        # for point in points_left:
-        #     print(point)
-
         for i,point in enumerate(points_bottom):
             bottom_surface = self.surfaces[0]
             bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
@@ -316,7 +276,6 @@ class ElemUniv:
             bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
             bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
 
-
         for i,point in enumerate(points_top):
             bottom_surface = self.surfaces[2]
             bottom_surface[i][0] = 0.25*(1 - point[0])*(1 - point[1])
@@ -330,12 +289,6 @@ class ElemUniv:
             bottom_surface[i][1] = 0.25*(1 + point[0])*(1 - point[1])
             bottom_surface[i][2] = 0.25*(1 + point[0])*(1 + point[1])
             bottom_surface[i][3] = 0.25*(1 - point[0])*(1 + point[1])
-
-
-        # # for x in self.surfaces:
-        # print("HBC SURFACES N1 N2 N3 N4")
-        # print(np.array2string(self.surfaces[3]))
-
 
 
         for j,surface in enumerate(self.surfaces):
