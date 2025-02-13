@@ -1,7 +1,7 @@
-# Ignore __pycache__ directories
 __pycache__/
 
-# Ignore all Python bytecode files
 *.pyc
 *.pyo
 *.pyd
+
+.idea/

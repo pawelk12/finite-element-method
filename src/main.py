@@ -1,8 +1,14 @@
-import math
+import numpy as np
 from models import Grid, ElemUniv, GlobalMatrixH, GlobalMatrixC, GlobalVectorP
 from parse_data import read_global_data, read_coords, read_elements, read_bc
 from simulation import simulate
-import numpy as np
+from utils import get_args
+
+
+filename, n_integration_points = get_args()
+
+print(filename)
+print(n_integration_points)
 
 
 #filepath = "../test_grid_data/Test1_4_4.txt"
