@@ -1,7 +1,6 @@
 from typing import List
 from models import GlobalData, Node, Element
-
-
+import sys
 
 def read_global_data(filename: str) -> GlobalData:
     data = []
@@ -13,6 +12,7 @@ def read_global_data(filename: str) -> GlobalData:
                 data.append(int(line.split()[-1]))
     except FileNotFoundError:
         print("Failed to open the file.")
+        sys.exit(1)
 
     return GlobalData(*data)
 
@@ -33,6 +33,7 @@ def read_coords(filename: str) -> List[Node]:
                     nodes.append(Node(x, y, 0))
     except FileNotFoundError:
         print("Failed to open the file.")
+        sys.exit(1)
     return nodes
 
 def read_bc(filename: str) -> List[int]:
@@ -47,11 +48,9 @@ def read_bc(filename: str) -> List[int]:
                 if read:
                     parts = line.split(",")
                     bc_nodes_list = [int(part.strip()) for part in parts]
-                    # for part in parts:
-                        # node_id = int(part.strip())
-                        # bc_nodes_list.append(node_id)
     except FileNotFoundError:
         print("Failed to open the file.")
+        sys.exit(1)
     return bc_nodes_list
 
 def read_elements(filename: str) -> List[Element]:
@@ -72,4 +71,5 @@ def read_elements(filename: str) -> List[Element]:
                     elements.append(Element(id=element_id, nodes_ids=ids))
     except FileNotFoundError:
         print("Failed to open the file.")
+        sys.exit(1)
     return elements
