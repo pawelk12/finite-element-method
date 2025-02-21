@@ -60,7 +60,8 @@ def main():
              global_data.simulation_step_time,
              global_data.simulation_time,
              global_data.initial_temp,
-             global_data.nN)
+             global_data.nN,
+             grid.nodes)
 
 if __name__ == "__main__":
     main()
